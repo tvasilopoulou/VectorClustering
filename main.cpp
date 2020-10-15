@@ -109,11 +109,7 @@ int main(int argc, char * argv[]){
 	/*END OF ARGUMENT CHECK*/
 	/*----------------------------------------------------------------------------------------------------------------------------------*/
 
-	int w = 4000;
-	int fixedInd = 3750;
-	HashMap * hashMap = new HashMap(L, fixedInd);
-	cout << hashMap->getSize() << endl;
-	cout << hashMap->getHashTableByIndex(2)->getSize() << endl; 
+	int w = 4;
 
 	// uint8_t imagesArray [];
 	int magicNum, numOfImages, dx, dy;
@@ -146,6 +142,9 @@ int main(int argc, char * argv[]){
 	}
 	else cout << "Unable to open file"; 
 
+	int fixedInd = numOfImages/16;
+	
+
 	int i=0;
 	uint8_t * imagesArray[numOfImages];
 	while(!inputF.eof()){
@@ -155,22 +154,13 @@ int main(int argc, char * argv[]){
 		i++;
 	}
 
-	for(i=0; i<numOfImages; i++){
-		/* https://stackoverflow.com/questions/288739/generate-random-numbers-uniformly-over-an-entire-range */
-		random_device rand_dev;
-	    mt19937 generator(rand_dev());
-	    uniform_int_distribution <int> distr(0, w);
-	
-	 	int sValues[k], aValues[k];
-		for (int j = 0; j < k; ++j){
-			sValues[j] = distr(generator);
-			aValues[j] = floor((imagesArray[i][j] - sValues[j])/w);
-			cout << floor((imagesArray[i][j])) << endl;
-			if(aValues[j]>0) cout << aValues[j] << '\n'	; //problem! => prints nothing
-		} 
-	}
+ 	
+	HashMap * hashMap = new HashMap(L, fixedInd, k);
+	cout << hashMap->getSize() << endl;
+	// cout << hashMap->getHashTableByIndex(2)->hashFunction(sValues, aValues) << endl; 
 
 	delete hashMap;
+	inputF.close();
 	return 0;
 }
 
