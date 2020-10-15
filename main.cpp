@@ -3,8 +3,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <iomanip>
+#include <netinet/in.h>
+#include <bits/stdc++.h> 
+#include "header.hpp"
+
+/*./main -d train-images.idx3-ubyte -o output.txt -q t10k-images.idx3-ubyte -k 4 -L 5 -R 0.1 -N 3 */
 
 using namespace std;
+
+uint32_t __builtin_bswap32 (uint32_t x);
 
 int main(int argc, char * argv[]){
 	if (argc > 15 || argc < 7 || argc % 2 != 1)
@@ -13,11 +21,11 @@ int main(int argc, char * argv[]){
 		return -1;
 	}
     //check arguements in pairs
-	if ((strcmp(argv[1],"-d") && strcmp(argv[3],"-d") && strcmp(argv[5],"-d") && strcmp(argv[7],"-d") && strcmp(argv[9],"-d") && strcmp(argv[11],"-d"))
-	|| (strcmp(argv[1],"-q") && strcmp(argv[3],"-q") && strcmp(argv[5],"-q") && strcmp(argv[7],"-q") && strcmp(argv[9],"-q") && strcmp(argv[11],"-q"))
-	|| (strcmp(argv[1],"-o") && strcmp(argv[3],"-o") && strcmp(argv[5],"-o") && strcmp(argv[7],"-o") && strcmp(argv[9],"-o") && strcmp(argv[11],"-o")))
+	if ((strcmp(argv[1],"-d") && strcmp(argv[3],"-d") && strcmp(argv[5],"-d") && strcmp(argv[7],"-d") && strcmp(argv[9],"-d") && strcmp(argv[11],"-d") && strcmp(argv[13],"-d"))
+	|| (strcmp(argv[1],"-q") && strcmp(argv[3],"-q") && strcmp(argv[5],"-q") && strcmp(argv[7],"-q") && strcmp(argv[9],"-q") && strcmp(argv[11],"-q") && strcmp(argv[13],"-q"))
+	|| (strcmp(argv[1],"-o") && strcmp(argv[3],"-o") && strcmp(argv[5],"-o") && strcmp(argv[7],"-o") && strcmp(argv[9],"-o") && strcmp(argv[11],"-o") && strcmp(argv[13],"-o")))
 	{
-		cout << ("Please try entering the Bitcoin Network again. Arguments given were either in the wrong order, or incorrect.\n");
+		cout << ("Please try running LSH again. Arguments given were either in the wrong order, or incorrect.\n");
 		return -2;
 	}
 
@@ -101,17 +109,68 @@ int main(int argc, char * argv[]){
 	/*END OF ARGUMENT CHECK*/
 	/*----------------------------------------------------------------------------------------------------------------------------------*/
 
-	string line;
-	ifstream inputF(inputFile);
-	if (inputF.is_open()){
-		while ( getline (inputF,line) ){
-			// cout << line << endl;
-			break;
-		}
-		inputF.close();
-	}
+	int w = 4000;
+	int fixedInd = 3750;
+	HashMap * hashMap = new HashMap(L, fixedInd);
+	cout << hashMap->getSize() << endl;
+	cout << hashMap->getHashTableByIndex(2)->getSize() << endl; 
 
+	// uint8_t imagesArray [];
+	int magicNum, numOfImages, dx, dy;
+	string line;
+	ifstream inputF(inputFile, ios::in | ios::binary);
+	if (inputF.is_open()){
+		for(int i=0; i<4; i++){
+			uint8_t buffer[4] = {0};
+			inputF.read((char*)buffer, sizeof(buffer));
+			unsigned int result = buffer[0];
+			result = (result << 8) | buffer[1];
+			result = (result << 8) | buffer[2];
+			result = (result << 8) | buffer[3];
+			cout << result << endl;
+			switch(i){
+				case 0:
+					magicNum = result;
+					break;
+				case 1:
+					numOfImages = result;
+					break;
+				case 2: 
+					dx = result;
+				case 3:
+					dy = result;	 
+				default:
+					break;
+			} 
+		}
+	}
 	else cout << "Unable to open file"; 
 
+	int i=0;
+	uint8_t * imagesArray[numOfImages];
+	while(!inputF.eof()){
+		uint8_t buffer[dx*dy] = {0};					//q
+		inputF.read((char*)buffer, sizeof(buffer));
+		imagesArray[i] = buffer;
+		i++;
+	}
+
+	for(i=0; i<numOfImages; i++){
+		/* https://stackoverflow.com/questions/288739/generate-random-numbers-uniformly-over-an-entire-range */
+		random_device rand_dev;
+	    mt19937 generator(rand_dev());
+	    uniform_int_distribution <int> distr(0, w);
+	
+	 	int sValues[k], aValues[k];
+		for (int j = 0; j < k; ++j){
+			sValues[j] = distr(generator);
+			aValues[j] = floor((imagesArray[i][j] - sValues[j])/w);
+			cout << floor((imagesArray[i][j])) << endl;
+			if(aValues[j]>0) cout << aValues[j] << '\n'	; //problem! => prints nothing
+		} 
+	}
+
+	delete hashMap;
 	return 0;
 }
+
