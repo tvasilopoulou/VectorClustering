@@ -1,18 +1,15 @@
 #include <iostream>
 #include <fstream>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <iomanip>
-#include <netinet/in.h>
+#include <algorithm> 
+#include <list> 
 #include <bits/stdc++.h> 
 #include "header.hpp"
+#include "funcHeader.hpp"
 
 /*./main -d train-images.idx3-ubyte -o output.txt -q t10k-images.idx3-ubyte -k 4 -L 5 -R 0.1 -N 3 */
 
 using namespace std;
-
-uint32_t __builtin_bswap32 (uint32_t x);
 
 int main(int argc, char * argv[]){
 	if (argc > 15 || argc < 7 || argc % 2 != 1)
@@ -109,58 +106,116 @@ int main(int argc, char * argv[]){
 	/*END OF ARGUMENT CHECK*/
 	/*----------------------------------------------------------------------------------------------------------------------------------*/
 
-	int w = 4;
-
-	// uint8_t imagesArray [];
+	int w = 4000;
 	int magicNum, numOfImages, dx, dy;
 	string line;
 	ifstream inputF(inputFile, ios::in | ios::binary);
-	if (inputF.is_open()){
-		for(int i=0; i<4; i++){
-			uint8_t buffer[4] = {0};
-			inputF.read((char*)buffer, sizeof(buffer));
-			unsigned int result = buffer[0];
-			result = (result << 8) | buffer[1];
-			result = (result << 8) | buffer[2];
-			result = (result << 8) | buffer[3];
-			cout << result << endl;
-			switch(i){
-				case 0:
-					magicNum = result;
-					break;
-				case 1:
-					numOfImages = result;
-					break;
-				case 2: 
-					dx = result;
-				case 3:
-					dy = result;	 
-				default:
-					break;
-			} 
-		}
+	// if (inputF.is_open()){
+	for(int i=0; i<4; i++){
+		uint8_t buffer[4] = {0};
+		inputF.read((char*)buffer, sizeof(buffer));
+		unsigned int result = buffer[0];
+		result = (result << 8) | buffer[1];
+		result = (result << 8) | buffer[2];
+		result = (result << 8) | buffer[3];
+		// cout << result << endl;
+		switch(i){
+			case 0:
+				magicNum = result;
+				break;
+			case 1:
+				numOfImages = result;
+				break;
+			case 2: 
+				dx = result;
+				break;
+			case 3:
+				dy = result;
+				break;
+			default:
+				break;
+		} 
 	}
-	else cout << "Unable to open file"; 
+// }
 
 	int fixedInd = numOfImages/16;
-	
+	int dimensions = dx*dy;
 
 	int i=0;
 	uint8_t * imagesArray[numOfImages];
+	HashMap * hashMap = new HashMap(L, fixedInd, k, dimensions, w);
+
+	random_device rd; // obtain a random number from hardware
+	mt19937 gen(rd()); // seed the generator
+	uniform_int_distribution<> distr(0, dimensions);
+
 	while(!inputF.eof()){
-		uint8_t buffer[dx*dy] = {0};					//q
+		uint8_t buffer[dimensions] = {0};					//q
 		inputF.read((char*)buffer, sizeof(buffer));
 		imagesArray[i] = buffer;
+		for(int j=0; j<L; j++)
+			hashMap->getHashTableByIndex(j)->hashFunctionG(w, dimensions,buffer); 
 		i++;
 	}
+	inputF.close();
 
- 	
-	HashMap * hashMap = new HashMap(L, fixedInd, k);
-	cout << hashMap->getSize() << endl;
-	// cout << hashMap->getHashTableByIndex(2)->hashFunction(sValues, aValues) << endl; 
+	int count=0;
+	ifstream queryF(queryFile, ios::in | ios::binary);
+	for(int i=0; i<4; i++){
+		uint8_t buffer[4] = {0};
+		queryF.read((char*)buffer, sizeof(buffer));
+		unsigned int result = buffer[0];
+		result = (result << 8) | buffer[1];
+		result = (result << 8) | buffer[2];
+		result = (result << 8) | buffer[3];
+		// cout << result << endl;
+		switch(i){
+			case 0:
+				magicNum = result;
+				break;
+			case 1:
+				numOfImages = result;
+				break;
+			case 2: 
+				dx = result;
+				break;
+			case 3:
+				dy = result;	 
+				break;
+			default:
+				break;
+		} 
+	}
+
+	uint8_t * queryImages[numOfImages];
+	dimensions = dx*dy;
+	while(!queryF.eof()){
+		uint8_t buffer[dimensions] = {0};					//q
+		queryF.read((char*)buffer, sizeof(buffer));
+		queryImages[i] = buffer;
+		hashMap->ANN(queryImages[i]);
+		hashMap->ARangeSearch(queryImages[i], R);
+	}
+
+
 
 	delete hashMap;
-	inputF.close();
 	return 0;
 }
 
+
+
+//How to locate item in list:
+
+// HashBucket bucketEntry(0, buffer);
+// list <HashBucket> * bucketList = hashMap->getHashTableByIndex(0)->getHashBuckets();
+// for(int i=0; i<fixedInd; i++){
+	// list<HashBucket>::iterator it = find_if(bucketList[i].begin(), bucketList[i].end(), [&] (HashBucket const& p) { return p.image == queryImages[i]; });
+	// if (it != bucketList[i].end()) cout << "found\n";
+// }
+/*-----------------------------------------------------------------------------------------------*/
+	// int arr[] = {10, 7, 8, 9, 1, 5}; 
+ //    int n = sizeof(arr)/sizeof(arr[0]); 
+ //    quickSort(arr, 0, n-1); 
+ //    printf("Sorted array: \n"); 
+ //    printArray(arr, n); 
