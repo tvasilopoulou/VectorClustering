@@ -142,8 +142,6 @@ int main(int argc, char * argv[]){
 	int fixedInd = numOfImages/16;
 	int dimensions = dx*dy;
 
-	cout << N << endl; 
-
 	int i=0;
 	uint8_t * imagesArray[numOfImages];
 	HashMap * hashMap = new HashMap(L, fixedInd, k, dimensions, w, N);
@@ -204,7 +202,7 @@ int main(int argc, char * argv[]){
 		queryF.read((char*)buffer, sizeof(buffer));
 		queryImages[i] = buffer;
 		Values * neighbors = hashMap->ANN(queryImages[i]);
-		Values * neighborsInRange = hashMap->ARangeSearch(queryImages[i], R);
+		// Values * neighborsInRange = hashMap->ARangeSearch(queryImages[i], R);
 		outputF << "Query: " << i << endl;
 		for(int j=0; j<N; j++){
 			// if(neighbors[j].getIndex()>0)

@@ -223,15 +223,12 @@ Values * HashMap::ARangeSearch(uint8_t * qImage, double R){
 		hBucket = this->getHashTableByIndex(i)->getHashBucket(index);
 		int length = hBucket.size();
 		bucketArray = &hBucket[0];
-		int count = 0;
-		for(int j=0; j<length; j++){				//instead of length -> 10*L
-			int dist = manhattanDistance(hBucket[j].getImage(), qImage, this->d);
+		for(int j=0; j<limit; j++){				//instead of length -> 10*L
+			int dist = manhattanDistance(bucketArray[j].getImage(), qImage, this->d);
 			if(dist < R){
 				neighbors[j].setIndex(dist);
-				neighbors[j].setHashResult(hBucket[j].getId());			//hashResult instead--> image id!!!
+				neighbors[j].setHashResult(dist);			//hashResult instead--> image id!!!
 				sort(neighbors + 0, neighbors + limit);
-				count++;
-				if(count == 20*this->size) break;
 			}
 			
 		}
