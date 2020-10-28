@@ -13,7 +13,7 @@
 
 
 Values::Values(){
-	this->index = -1;
+	this->index = pow(2, 28);
 	this->hashResult = -1;
 }
 Values::Values(int index, int hashResult){
@@ -42,6 +42,10 @@ HashBucket::HashBucket(int id, uint8_t * image){
 }
 uint8_t * HashBucket::getImage(){
 	return this->image;
+}
+
+int HashBucket::getId(){
+	return this->id;
 }
 
 
@@ -90,7 +94,7 @@ int HashTable::hashFunctionH(int * sValues, int * aValues){
 }
 
 
-int HashTable::hashFunctionG(int w, int d, uint8_t * image){
+int HashTable::hashFunctionG(int w, int d, uint8_t * image, int imageNumber){
 	unsigned int g = 0;
 	int it;
 	for(int p=0; p<k; p++){			//generate k number of hi(x)'s to concat, for single image
@@ -122,19 +126,20 @@ int HashTable::hashFunctionG(int w, int d, uint8_t * image){
 			g = hashCache[it];
 		}
 	}
-
-	HashBucket hBucket = HashBucket(0, image);
+	if(imageNumber==pow(2, 32 - this->k)) return g%this->size;
+	HashBucket hBucket = HashBucket(imageNumber, image);
 	// if((g%this->size)!=0)cout << g%this->size << endl;
 	this->hashBuckets[g%this->size].push_back(hBucket);
 	return g%this->size;
 }
 
 
-HashMap::HashMap(int size, int fixedInd, int k, int d, int w){
+HashMap::HashMap(int size, int fixedInd, int k, int d, int w, int N){
 	srand(time(0));
 	this->k = k;
 	this->d = d;
 	this->w = w;
+	this->N = N;
 	this->size = size;
 	this->sValues = new int[d];
 	this->hashTable = new HashTable * [size];
@@ -175,21 +180,29 @@ Values * HashMap::ANN(uint8_t * qImage){
 	vector <HashBucket> hBucket;
 	HashBucket * bucketArray;
 	int index;
-	Values * neighbors = new Values[this->k];
-	// sort(neighbors + 0, neighbors + this->k);
+	Values * neighbors = new Values[this->N];
 	int maxDist = pow(2, 32-this->k);
 	for(int i=0; i<size; i++){		//for every hashTable
-		index = this->getHashTableByIndex(i)->hashFunctionG(w, d, qImage);
+		index = this->getHashTableByIndex(i)->hashFunctionG(w, d, qImage, pow(2, 32-this->k));		//only return list
 		hBucket = this->getHashTableByIndex(i)->getHashBucket(index);
 		int length = hBucket.size();
-		bucketArray = &hBucket[0];
-		for(int j=0; j<10 * (this->size); j++){				//instead of length -> 10*L
-			int dist = manhattanDistance(bucketArray[j].getImage(), qImage, this->d);
-			if(dist < maxDist){
-				neighbors[this->k - 1].setIndex(dist);
-				neighbors[this->k - 1].setHashResult(dist);			//hashResult instead--> image id!!!
-				sort(neighbors + 0, neighbors + this->k);
-				maxDist = neighbors[this->k - 1].getIndex();
+		// if(length==0) continue;				// if no neighbors in current list of hashtable, skip
+		int count = 0;
+		bucketArray = &hBucket[0];			// convert to array
+		for(int j=0;j<length; j++){				//for every bucket in list-array
+			// maxDist = neighbors[this->N - 1].getIndex();
+
+			int dist = manhattanDistance(hBucket[j].getImage(), qImage, this->d);
+			// cout << dist << " is < than " << maxDist << "?" << endl;
+			if(dist < maxDist){			//closer than what is currently available
+				neighbors[this->N - 1].setIndex(dist);
+				neighbors[this->N - 1].setHashResult(hBucket[j].getId());
+				sort(neighbors + 0, neighbors + this->N);
+				maxDist = neighbors[this->N - 1].getIndex();
+				count++;
+				// cout << "MaxDist now is " << maxDist << endl;
+				if(count == 10*this->size) break;
+
 			}
 			
 		}
@@ -206,15 +219,19 @@ Values * HashMap::ARangeSearch(uint8_t * qImage, double R){
 	int limit = 20 * (this->size);
 	Values * neighbors = new Values[limit];
 	for(int i=0; i<size; i++){		//for every hashTable
-		index = this->getHashTableByIndex(i)->hashFunctionG(w, d, qImage);
+		index = this->getHashTableByIndex(i)->hashFunctionG(w, d, qImage, -1);
 		hBucket = this->getHashTableByIndex(i)->getHashBucket(index);
+		int length = hBucket.size();
 		bucketArray = &hBucket[0];
-		for(int j=0; j<limit; j++){				//instead of length -> 10*L
-			int dist = manhattanDistance(bucketArray[j].getImage(), qImage, this->d);
+		int count = 0;
+		for(int j=0; j<length; j++){				//instead of length -> 10*L
+			int dist = manhattanDistance(hBucket[j].getImage(), qImage, this->d);
 			if(dist < R){
 				neighbors[j].setIndex(dist);
-				neighbors[j].setHashResult(dist);			//hashResult instead--> image id!!!
+				neighbors[j].setHashResult(hBucket[j].getId());			//hashResult instead--> image id!!!
 				sort(neighbors + 0, neighbors + limit);
+				count++;
+				if(count == 20*this->size) break;
 			}
 			
 		}

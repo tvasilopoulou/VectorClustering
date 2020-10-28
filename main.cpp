@@ -12,6 +12,7 @@
 using namespace std;
 
 int main(int argc, char * argv[]){
+	// while(1){
 	if (argc > 15 || argc < 7 || argc % 2 != 1)
 	{
 		cout << ("Please try running LSH again. Number of arguments was different than expected.\n");
@@ -61,7 +62,7 @@ int main(int argc, char * argv[]){
 	else if (argv[7]!=NULL && !(strcmp(argv[7],"-o"))) { outputFile=(char *)malloc(sizeof(argv[8]+1)) ; strncpy(outputFile, argv[8], strlen(argv[8])+1); } 		
 	else if (argv[9]!=NULL && !(strcmp(argv[9],"-o"))) { outputFile=(char *)malloc(sizeof(argv[10]+1)) ; strncpy(outputFile, argv[10], strlen(argv[10])+1); } 
 	else if (argv[11]!=NULL && !(strcmp(argv[11],"-o"))) { outputFile=(char *)malloc(sizeof(argv[12]+1)) ; strncpy(outputFile, argv[12], strlen(argv[12])+1); } 
-	else if (argv[13]!=NULL && !(strcmp(argv[13],"-o"))) { outputFile=(char *)malloc(sizeof(argv[12]+1)) ; strncpy(outputFile, argv[12], strlen(argv[12])+1); } 
+	else if (argv[13]!=NULL && !(strcmp(argv[13],"-o"))) { outputFile=(char *)malloc(sizeof(argv[14]+1)) ; strncpy(outputFile, argv[14], strlen(argv[14])+1); } 
 
 /*-k*/
 	if (!(strcmp(argv[1],"-k"))) k=atoi(argv[2]);
@@ -70,7 +71,7 @@ int main(int argc, char * argv[]){
 	else if (argv[7]!=NULL && !(strcmp(argv[7],"-k"))) k=atoi(argv[8]);
 	else if (argv[9]!=NULL && !(strcmp(argv[9],"-k"))) k=atoi(argv[10]);	
 	else if (argv[11]!=NULL && !(strcmp(argv[11],"-k"))) k=atoi(argv[12]);	
-	else if (argv[13]!=NULL && !(strcmp(argv[13],"-k"))) k=atoi(argv[12]);	
+	else if (argv[13]!=NULL && !(strcmp(argv[13],"-k"))) k=atoi(argv[14]);	
 	else k=4;
 
 /*-L*/
@@ -80,7 +81,7 @@ int main(int argc, char * argv[]){
 	else if (argv[7]!=NULL && !(strcmp(argv[7],"-L"))) L=atoi(argv[8]);
 	else if (argv[9]!=NULL && !(strcmp(argv[9],"-L"))) L=atoi(argv[10]);	
 	else if (argv[11]!=NULL && !(strcmp(argv[11],"-L"))) L=atoi(argv[12]);	
-	else if (argv[13]!=NULL && !(strcmp(argv[13],"-L"))) L=atoi(argv[12]);	
+	else if (argv[13]!=NULL && !(strcmp(argv[13],"-L"))) L=atoi(argv[14]);	
 	else L=5;
 
 /*-N*/
@@ -90,8 +91,8 @@ int main(int argc, char * argv[]){
 	else if (argv[7]!=NULL && !(strcmp(argv[7],"-N"))) N=atoi(argv[8]);
 	else if (argv[9]!=NULL && !(strcmp(argv[9],"-N"))) N=atoi(argv[10]);	
 	else if (argv[11]!=NULL && !(strcmp(argv[11],"-N"))) N=atoi(argv[12]);	
-	else if (argv[13]!=NULL && !(strcmp(argv[13],"-N"))) N=atoi(argv[12]);	
-	else N=1;
+	else if (argv[13]!=NULL && !(strcmp(argv[13],"-N"))) N=atoi(argv[14]);	
+	else N=4;
 
 /*-R*/
 	if (!(strcmp(argv[1],"-R"))) R=atof(argv[2]);
@@ -100,13 +101,13 @@ int main(int argc, char * argv[]){
 	else if (argv[7]!=NULL && !(strcmp(argv[7],"-R"))) R=atof(argv[8]);
 	else if (argv[9]!=NULL && !(strcmp(argv[9],"-R"))) R=atof(argv[10]);	
 	else if (argv[11]!=NULL && !(strcmp(argv[11],"-R"))) R=atof(argv[12]);	
-	else if (argv[13]!=NULL && !(strcmp(argv[13],"-R"))) R=atof(argv[12]);	
+	else if (argv[13]!=NULL && !(strcmp(argv[13],"-R"))) R=atof(argv[14]);	
 	else R=1.0;
 
 	/*END OF ARGUMENT CHECK*/
 	/*----------------------------------------------------------------------------------------------------------------------------------*/
 
-	int w = 4000;
+	int w = 400;
 	int magicNum, numOfImages, dx, dy;
 	string line;
 	ifstream inputF(inputFile, ios::in | ios::binary);
@@ -141,9 +142,11 @@ int main(int argc, char * argv[]){
 	int fixedInd = numOfImages/16;
 	int dimensions = dx*dy;
 
+	cout << N << endl; 
+
 	int i=0;
 	uint8_t * imagesArray[numOfImages];
-	HashMap * hashMap = new HashMap(L, fixedInd, k, dimensions, w);
+	HashMap * hashMap = new HashMap(L, fixedInd, k, dimensions, w, N);
 
 	random_device rd; // obtain a random number from hardware
 	mt19937 gen(rd()); // seed the generator
@@ -154,10 +157,12 @@ int main(int argc, char * argv[]){
 		inputF.read((char*)buffer, sizeof(buffer));
 		imagesArray[i] = buffer;
 		for(int j=0; j<L; j++)
-			hashMap->getHashTableByIndex(j)->hashFunctionG(w, dimensions,buffer); 
+			hashMap->getHashTableByIndex(j)->hashFunctionG(w, dimensions,buffer, i); 
 		i++;
 	}
 	inputF.close();
+
+	/*----------------------------------------------------------------------------------------------------------------------------------*/
 
 	int count=0;
 	ifstream queryF(queryFile, ios::in | ios::binary);
@@ -188,34 +193,40 @@ int main(int argc, char * argv[]){
 	}
 
 	uint8_t * queryImages[numOfImages];
-	dimensions = dx*dy;
+	i=0;
+
+	ofstream outputF;
+	outputF.open (outputFile);
+
+	// dimensions = dx*dy;
 	while(!queryF.eof()){
 		uint8_t buffer[dimensions] = {0};					//q
 		queryF.read((char*)buffer, sizeof(buffer));
 		queryImages[i] = buffer;
-		hashMap->ANN(queryImages[i]);
-		hashMap->ARangeSearch(queryImages[i], R);
+		Values * neighbors = hashMap->ANN(queryImages[i]);
+		Values * neighborsInRange = hashMap->ARangeSearch(queryImages[i], R);
+		outputF << "Query: " << i << endl;
+		for(int j=0; j<N; j++){
+			// if(neighbors[j].getIndex()>0)
+				outputF << "Nearest neighbor-" << j+1 << ": " << neighbors[j].getHashResult() << endl << endl;
+		}
+
+		i++;
 	}
 
 
 
 	delete hashMap;
+
+	/*cout << "Run finished, would you like to continue?(Y/n): " ;
+	char * prompt;
+	cin >> prompt; 
+	while(1){
+		if(prompt == "n") return 0;
+		else if(prompt == "Y") break;
+		else continue;
+	}
+	}*/
 	return 0;
 }
 
-
-
-//How to locate item in list:
-
-// HashBucket bucketEntry(0, buffer);
-// list <HashBucket> * bucketList = hashMap->getHashTableByIndex(0)->getHashBuckets();
-// for(int i=0; i<fixedInd; i++){
-	// list<HashBucket>::iterator it = find_if(bucketList[i].begin(), bucketList[i].end(), [&] (HashBucket const& p) { return p.image == queryImages[i]; });
-	// if (it != bucketList[i].end()) cout << "found\n";
-// }
-/*-----------------------------------------------------------------------------------------------*/
-	// int arr[] = {10, 7, 8, 9, 1, 5}; 
- //    int n = sizeof(arr)/sizeof(arr[0]); 
- //    quickSort(arr, 0, n-1); 
- //    printf("Sorted array: \n"); 
- //    printArray(arr, n); 
