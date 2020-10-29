@@ -3,6 +3,7 @@
 #include <string.h>
 #include <algorithm> 
 #include <list> 
+#include <vector>
 #include <bits/stdc++.h> 
 #include "header.hpp"
 #include "funcHeader.hpp"
@@ -92,7 +93,7 @@ int main(int argc, char * argv[]){
 	else if (argv[9]!=NULL && !(strcmp(argv[9],"-N"))) N=atoi(argv[10]);	
 	else if (argv[11]!=NULL && !(strcmp(argv[11],"-N"))) N=atoi(argv[12]);	
 	else if (argv[13]!=NULL && !(strcmp(argv[13],"-N"))) N=atoi(argv[14]);	
-	else N=4;
+	else N=1;
 
 /*-R*/
 	if (!(strcmp(argv[1],"-R"))) R=atof(argv[2]);
@@ -119,7 +120,7 @@ int main(int argc, char * argv[]){
 		result = (result << 8) | buffer[1];
 		result = (result << 8) | buffer[2];
 		result = (result << 8) | buffer[3];
-		// cout << result << endl;
+		cout << result << endl;
 		switch(i){
 			case 0:
 				magicNum = result;
@@ -145,19 +146,31 @@ int main(int argc, char * argv[]){
 	int i=0;
 	uint8_t * imagesArray[numOfImages];
 	HashMap * hashMap = new HashMap(L, fixedInd, k, dimensions, w, N);
+	vector <uint8_t *> imagesVector;
 
-	random_device rd; // obtain a random number from hardware
-	mt19937 gen(rd()); // seed the generator
-	uniform_int_distribution<> distr(0, dimensions);
+	while(i!=numOfImages){
+		uint8_t buffer[dimensions] = {0};
+		inputF.read((char*)buffer, dimensions);
+		vector <uint8_t> image;
+		for(int dim=0; dim<dimensions; dim++) image.push_back(buffer[dim]);
+		uint8_t * imageEntry = &image[0];
+		imagesArray[i] = imageEntry;
+		imagesVector.push_back(imageEntry);
 
-	while(!inputF.eof()){
-		uint8_t buffer[dimensions] = {0};					//q
-		inputF.read((char*)buffer, sizeof(buffer));
-		imagesArray[i] = buffer;
-		for(int j=0; j<L; j++)
-			hashMap->getHashTableByIndex(j)->hashFunctionG(w, dimensions,buffer, i); 
+		for(int j=0; j<L; j++){
+			hashMap->getHashTableByIndex(j)->hashFunctionG(w, dimensions,imagesArray[i], i); 
+		}
 		i++;
+		// break;
 	}
+
+	/*for(int i=0; i<dx; i++){
+		for(int b=0; b<dy; b++){
+			uint8_t temp = 0;
+			inputF.read((char *)&temp, sizeof(temp));
+			cout << (int) temp << endl;
+		}
+	}*/
 	inputF.close();
 
 	/*----------------------------------------------------------------------------------------------------------------------------------*/
@@ -196,23 +209,41 @@ int main(int argc, char * argv[]){
 	ofstream outputF;
 	outputF.open (outputFile);
 
+	double durationLSH=0.0 ;//= std::chrono::duration_cast<std::chrono::microseconds>( 0 ).count();
+	clock_t start;
 	// dimensions = dx*dy;
 	while(!queryF.eof()){
 		uint8_t buffer[dimensions] = {0};					//q
-		queryF.read((char*)buffer, sizeof(buffer));
-		queryImages[i] = buffer;
+
+		queryF.read((char*)buffer, dimensions);
+		vector <uint8_t> image;
+		for(int dim=0; dim<dimensions; dim++) image.push_back(buffer[dim]);
+		uint8_t * imageEntry = &image[0];
+		queryImages[i] = imageEntry;
+		// auto t1REAL = std::chrono::high_resolution_clock::now();
+		vector <int> realDists = calculateDistances(queryImages[i], dimensions, imagesVector, N);
+		realDists.resize(N);
+		// auto t2REAL = std::chrono::high_resolution_clock::now();
+	 	// auto durationREAL = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+
+		// auto t1LSH = std::chrono::high_resolution_clock::now();
+		// start = clock();
 		Values * neighbors = hashMap->ANN(queryImages[i]);
+		// durationLSH +=(double)(clock() - start)/CLOCKS_PER_SEC;
+		// auto t2LSH = std::chrono::high_resolution_clock::now();
+	    // durationLSH += std::chrono::duration_cast<std::chrono::microseconds>( t2LSH - t1LSH ).count();
 		// Values * neighborsInRange = hashMap->ARangeSearch(queryImages[i], R);
-		outputF << "Query: " << i << endl;
+		outputF << endl << "Query: " << i << endl;
 		for(int j=0; j<N; j++){
-			// if(neighbors[j].getIndex()>0)
-				outputF << "Nearest neighbor-" << j+1 << ": " << neighbors[j].getHashResult() << endl << endl;
+			outputF << "Nearest neighbor-" << j+1 << ": " << neighbors[j].getHashResult() << endl << "distanceLSH: " << neighbors[j].getIndex() << endl << "distanceTrue: " << realDists[j] << endl;
+
 		}
 
 		i++;
 	}
 
 
+    cout << durationLSH << endl;
 
 	delete hashMap;
 
