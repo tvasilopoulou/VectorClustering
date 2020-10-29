@@ -147,18 +147,15 @@ int main(int argc, char * argv[]){
 	uint8_t * imagesArray[numOfImages];
 	HashMap * hashMap = new HashMap(L, fixedInd, k, dimensions, w, N);
 	vector <uint8_t *> imagesVector;
+	uint8_t * buffer;
 
 	while(i!=numOfImages){
-		uint8_t buffer[dimensions] = {0};
-		inputF.read((char*)buffer, dimensions);
-		vector <uint8_t> image;
-		for(int dim=0; dim<dimensions; dim++) image.push_back(buffer[dim]);
-		uint8_t * imageEntry = &image[0];
-		imagesArray[i] = imageEntry;
-		imagesVector.push_back(imageEntry);
-
+		buffer = new uint8_t[dimensions];
+		inputF.read((char *)buffer, dimensions);
+		imagesVector.push_back(buffer);
+		cout << (long int) buffer << endl;
 		for(int j=0; j<L; j++){
-			hashMap->getHashTableByIndex(j)->hashFunctionG(w, dimensions,imagesArray[i], i); 
+			hashMap->getHashTableByIndex(j)->hashFunctionG(w, dimensions, buffer, i); 
 		}
 		i++;
 		// break;
