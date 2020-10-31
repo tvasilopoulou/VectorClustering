@@ -14,9 +14,9 @@ using namespace std;
 
 int main(int argc, char * argv[]){
 	// while(1){
-	if (argc > 15 || argc < 7 || argc % 2 != 1)
+	if (argc > 17 || argc < 7 || argc % 2 != 1)
 	{
-		cout << ("Please try running LSH again. Number of arguments was different than expected.\n");
+		cout << ("Please try running Cube again. Number of arguments was different than expected.\n");
 		return -1;
 	}
     //check arguements in pairs
@@ -24,12 +24,12 @@ int main(int argc, char * argv[]){
 	|| (strcmp(argv[1],"-q") && strcmp(argv[3],"-q") && strcmp(argv[5],"-q") && strcmp(argv[7],"-q") && strcmp(argv[9],"-q") && strcmp(argv[11],"-q") && strcmp(argv[13],"-q"))
 	|| (strcmp(argv[1],"-o") && strcmp(argv[3],"-o") && strcmp(argv[5],"-o") && strcmp(argv[7],"-o") && strcmp(argv[9],"-o") && strcmp(argv[11],"-o") && strcmp(argv[13],"-o")))
 	{
-		cout << ("Please try running LSH again. Arguments given were either in the wrong order, or incorrect.\n");
+		cout << ("Please try running Cube again. Arguments given were either in the wrong order, or incorrect.\n");
 		return -2;
 	}
 
 	char * inputFile, * queryFile, * outputFile;
-	int k, L, N;
+	int k, M, N, probes;
 	double R;
 
 
@@ -73,17 +73,30 @@ int main(int argc, char * argv[]){
 	else if (argv[9]!=NULL && !(strcmp(argv[9],"-k"))) k=atoi(argv[10]);	
 	else if (argv[11]!=NULL && !(strcmp(argv[11],"-k"))) k=atoi(argv[12]);	
 	else if (argv[13]!=NULL && !(strcmp(argv[13],"-k"))) k=atoi(argv[14]);	
-	else k=4;
+	else if (argv[15]!=NULL && !(strcmp(argv[15],"-k"))) k=atoi(argv[16]);	
+	else k=3;
 
-/*-L*/
-	if (!(strcmp(argv[1],"-L"))) L=atoi(argv[2]);
-	else if (!(strcmp(argv[3],"-L"))) L=atoi(argv[4]);
-	else if (!(strcmp(argv[5],"-L"))) L=atoi(argv[6]);
-	else if (argv[7]!=NULL && !(strcmp(argv[7],"-L"))) L=atoi(argv[8]);
-	else if (argv[9]!=NULL && !(strcmp(argv[9],"-L"))) L=atoi(argv[10]);	
-	else if (argv[11]!=NULL && !(strcmp(argv[11],"-L"))) L=atoi(argv[12]);	
-	else if (argv[13]!=NULL && !(strcmp(argv[13],"-L"))) L=atoi(argv[14]);	
-	else L=5;
+/*-M*/
+	if (!(strcmp(argv[1],"-M"))) M=atoi(argv[2]);
+	else if (!(strcmp(argv[3],"-M"))) M=atoi(argv[4]);
+	else if (!(strcmp(argv[5],"-M"))) M=atoi(argv[6]);
+	else if (argv[7]!=NULL && !(strcmp(argv[7],"-M"))) M=atoi(argv[8]);
+	else if (argv[9]!=NULL && !(strcmp(argv[9],"-M"))) M=atoi(argv[10]);	
+	else if (argv[11]!=NULL && !(strcmp(argv[11],"-M"))) M=atoi(argv[12]);	
+	else if (argv[13]!=NULL && !(strcmp(argv[13],"-M"))) M=atoi(argv[14]);	
+	else if (argv[15]!=NULL && !(strcmp(argv[15],"-M"))) M=atoi(argv[16]);	
+	else M=10;
+
+/*-probes*/
+	if (!(strcmp(argv[1],"-probes"))) probes=atoi(argv[2]);
+	else if (!(strcmp(argv[3],"-probes"))) probes=atoi(argv[4]);
+	else if (!(strcmp(argv[5],"-probes"))) probes=atoi(argv[6]);
+	else if (argv[7]!=NULL && !(strcmp(argv[7],"-probes"))) probes=atoi(argv[8]);
+	else if (argv[9]!=NULL && !(strcmp(argv[9],"-probes"))) probes=atoi(argv[10]);	
+	else if (argv[11]!=NULL && !(strcmp(argv[11],"-probes"))) probes=atoi(argv[12]);	
+	else if (argv[13]!=NULL && !(strcmp(argv[13],"-probes"))) probes=atoi(argv[14]);	
+	else if (argv[15]!=NULL && !(strcmp(argv[15],"-probes"))) probes=atoi(argv[16]);	
+	else probes=2;
 
 /*-N*/
 	if (!(strcmp(argv[1],"-N"))) N=atoi(argv[2]);
@@ -93,6 +106,7 @@ int main(int argc, char * argv[]){
 	else if (argv[9]!=NULL && !(strcmp(argv[9],"-N"))) N=atoi(argv[10]);	
 	else if (argv[11]!=NULL && !(strcmp(argv[11],"-N"))) N=atoi(argv[12]);	
 	else if (argv[13]!=NULL && !(strcmp(argv[13],"-N"))) N=atoi(argv[14]);	
+	else if (argv[15]!=NULL && !(strcmp(argv[15],"-N"))) N=atoi(argv[16]);	
 	else N=1;
 
 /*-R*/
@@ -103,11 +117,11 @@ int main(int argc, char * argv[]){
 	else if (argv[9]!=NULL && !(strcmp(argv[9],"-R"))) R=atof(argv[10]);	
 	else if (argv[11]!=NULL && !(strcmp(argv[11],"-R"))) R=atof(argv[12]);	
 	else if (argv[13]!=NULL && !(strcmp(argv[13],"-R"))) R=atof(argv[14]);	
+	else if (argv[15]!=NULL && !(strcmp(argv[15],"-R"))) R=atof(argv[16]);	
 	else R=1.0;
 
 	/*END OF ARGUMENT CHECK*/
 	/*----------------------------------------------------------------------------------------------------------------------------------*/
-
 	int w = 400;
 	int magicNum, numOfImages, dx, dy;
 	string line;
@@ -120,6 +134,7 @@ int main(int argc, char * argv[]){
 		result = (result << 8) | buffer[1];
 		result = (result << 8) | buffer[2];
 		result = (result << 8) | buffer[3];
+		// cout << result << endl;
 		switch(i){
 			case 0:
 				magicNum = result;
@@ -142,21 +157,20 @@ int main(int argc, char * argv[]){
 	int fixedInd = numOfImages/16;
 	int dimensions = dx*dy;
 
-	int i;
+	int i=0;
 	uint8_t * imagesArray[numOfImages];
-	HashMap * hashMap = new HashMap(L, fixedInd, k, dimensions, w, N);
 	vector <uint8_t *> imagesVector;
+	HashMap * hashMap = new HashMap(1, fixedInd, k, dimensions, w, N);
 	uint8_t * buffer;
 
-	for(i=0; i<numOfImages; i++){
+	while(i<numOfImages){
 		buffer = new uint8_t[dimensions];
-		inputF.read((char *)buffer, dimensions);
+		inputF.read((char*)buffer, sizeof(buffer));
 		imagesVector.push_back(buffer);
-		for(int j=0; j<L; j++){
-			hashMap->getHashTableByIndex(j)->hashFunctionG(w, dimensions, buffer, i); 
-		}
+		//add to hashTables accordingly
+		hashMap->getHashTableByIndex(0)->hashFunctionCubeG(w, dimensions,buffer, i); 
+		i++;
 	}
-
 	inputF.close();
 
 	/*----------------------------------------------------------------------------------------------------------------------------------*/
@@ -189,50 +203,17 @@ int main(int argc, char * argv[]){
 	}
 
 	uint8_t * queryImages[numOfImages];
-	ofstream outputF;
-	outputF.open (outputFile);
 
-	double durationLSH=0.0 ;//= std::chrono::duration_cast<std::chrono::microseconds>( 0 ).count();
-	clock_t start;
-	// dimensions = dx*dy;
 	for(i=0; i<numOfImages; i++){
 		buffer = new uint8_t[dimensions];
 		queryF.read((char*)buffer, dimensions);
-		
-		// auto t1REAL = std::chrono::high_resolution_clock::now();
-		vector <int> realDists = calculateDistances(buffer, dimensions, imagesVector, N);
-		realDists.resize(N);
-		// auto t2REAL = std::chrono::high_resolution_clock::now();
-	 	// auto durationREAL = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
-
-		// auto t1LSH = std::chrono::high_resolution_clock::now();
-		// start = clock();
-		Values * neighbors = hashMap->ANN(buffer);
-		// durationLSH +=(double)(clock() - start)/CLOCKS_PER_SEC;
-		// auto t2LSH = std::chrono::high_resolution_clock::now();
-	    // durationLSH += std::chrono::duration_cast<std::chrono::microseconds>( t2LSH - t1LSH ).count();
-		Values * neighborsInRange = hashMap->ARangeSearch(queryImages[i], R);
-		// outputF << endl << "Query: " << i << endl;
-		// for(int j=0; j<N; j++){
-		// 	outputF << "Nearest neighbor-" << j+1 << ": " << neighbors[j].getHashResult() << endl << "distanceLSH: " << neighbors[j].getIndex() << endl << "distanceTrue: " << realDists[j] << endl;
-
-		// }
+ 		// Values * neighbors = hashMap->ANNCube(buffer, probes);
+		Values * neighbors = hashMap->ARangeSearchCube(buffer, probes, R, fixedInd);
+		for(int o=0; o<20; o++) if(neighbors[o].getIndex() < R) cout<< neighbors[o].getIndex() << endl;
 	}
 
 
-    cout << durationLSH << endl;
 
 	delete hashMap;
-
-	/*cout << "Run finished, would you like to continue?(Y/n): " ;
-	char * prompt;
-	cin >> prompt; 
-	while(1){
-		if(prompt == "n") return 0;
-		else if(prompt == "Y") break;
-		else continue;
-	}
-	}*/
 	return 0;
 }
-

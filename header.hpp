@@ -1,4 +1,6 @@
 #include <iostream>
+#include <string>
+#include <vector>
 
 using namespace std;
 
@@ -24,10 +26,11 @@ private:
 public:
 	HashBucket(int id, uint8_t * image);
 	uint8_t * getImage();
+	int getId();
 
 } HashBucket;
 
-typedef class HashTable{						// 1-1 hashTable - hashFunction
+typedef class HashTable{
 private:
 	int size;
 	int m;
@@ -44,7 +47,8 @@ public:
 	int getSize();
 	int * calcA(int * aValues);
 	int hashFunctionH(int * sValues, int * aValues);	
-	int hashFunctionG(int w, int d, uint8_t * image);
+	string hashFunctionCubeG(int w, int d, uint8_t * image, int imageNumber);
+	int hashFunctionG(int w, int d, uint8_t * image, int imageNumber);
 
 } HashTable;
 
@@ -53,18 +57,24 @@ private:
 	int k;
 	int d;
 	int w;
+	int N;
 	int size;
 	int * sValues;
+	vector <string> candidates;
 	map <int,int> hashCache;
 	HashTable ** hashTable;
 public:
-	HashMap(int size, int fixedInd, int k, int d, int w);
+	HashMap(int size, int fixedInd, int k, int d, int w, int N);
 	~HashMap();
 	void generateSValues(int d, int w);
 	int getSize();
+	vector <string> getCandidates();
 	HashTable * getHashTableByIndex(int index);
-	Values * ANN(uint8_t * qImage);
-	Values * ARangeSearch(uint8_t * qImage, double R);
+	Values * ANN(uint8_t * );
+	Values * ANNCube(uint8_t * , int);
+	Values * ARangeSearch(uint8_t * , double);
+	Values * ARangeSearchCube(uint8_t * , int, double, int);
+	void hammingCalc(string , const int , const int);
 
 } HashMap;
 
