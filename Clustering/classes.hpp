@@ -3,7 +3,7 @@
 
 using namespace std;
 
-
+// class to represent an Image with all needed information
 typedef class Image{
 	int imageId;
 	int clusterId;
@@ -23,17 +23,17 @@ public:
 	void setMinDist(int);
 	void setSecondNearestCentroid(int);
     void setSecondMinDist(int);
-
 }Image;
 
+
+// class to represent a Cluster with all needed information
 typedef class Cluster
 {
 	vector<uint8_t *> imagesInCluster;
 	Image * cluster;
 public:
 	Cluster(Image *);
-	vector<uint8_t *> getImagesVector();
-	void setCluster(Image *);
-	// ~Cluster();
+	vector<uint8_t *> * getImagesVector();
+	Image * getCluster();
 	
 }Cluster;
