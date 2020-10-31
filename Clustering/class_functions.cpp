@@ -2,7 +2,7 @@
 #include <iterator> 
 #include <string>
 #include <map>
-#include <utility>      // std::pair
+#include <utility>
 #include <ctime> 
 #include <vector> 
 #include <cmath> 
@@ -13,6 +13,7 @@
 
 using namespace std;
 
+
 Image::Image(int id, uint8_t * image, int dimensions){
     this->dimensions = dimensions;
     this->imageId = id;
@@ -20,7 +21,8 @@ Image::Image(int id, uint8_t * image, int dimensions){
     this->secondNearestCentroid = 0;
     this->secondMinDist = 0;
     this->image = image;
-    this->clusterId = 0; //Initially not assigned to any cluster
+    //initially not assigned to any cluster
+    this->clusterId = 0;
 }
 uint8_t * Image::getVal(){
 	return this->image;
@@ -60,10 +62,12 @@ Cluster::Cluster(Image * centroidImage){
     this->cluster = centroidImage;
 }
 
-vector<uint8_t *> Cluster::getImagesVector(){
-    return this->imagesInCluster;
+vector<uint8_t *> * Cluster::getImagesVector(){
+    return &(this->imagesInCluster);
 }
 
-void Cluster::setCluster(Image * clusterInfo){
-    this->cluster = clusterInfo;
+Image * Cluster::getCluster(){
+    return this->cluster;
 }
+
+
