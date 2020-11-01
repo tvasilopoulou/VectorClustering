@@ -250,7 +250,7 @@ Values * HashMap::ANN(uint8_t * qImage){
 				if(count == 10*this->size) break;
 
 			}
-			
+			if(count == 10*this->size) break;
 		}
 
 
@@ -294,7 +294,7 @@ Values * HashMap::ANNCube(uint8_t * qImage, int probes){		//pass probes - 1!!!
 			}
 			
 		}
-			
+		if(count == 10*this->size) break;	
 	}
 
 
@@ -308,26 +308,30 @@ Values * HashMap::ARangeSearch(uint8_t * qImage, double R){
 	int index;
 	int limit = 20 * (this->size);
 	Values * neighbors = new Values[limit];
-	for(int i=0; i<size; i++){		//for every hashTable
+	int l=0;
+	for(int i=0; i<this->size; i++){		//for every hashTable
 		index = this->getHashTableByIndex(i)->hashFunctionG(w, d, qImage, -1);
 		hBucket = this->getHashTableByIndex(i)->getHashBucket(index);
 		int length = hBucket.size();
 		// bucketArray = &hBucket[0];
-		for(int j=0; j<limit; j++){				//instead of length -> 10*L
+		for(int j=0; j<length; j++){				//instead of length -> 10*L
 			int dist = manhattanDistance(hBucket[j].getImage(), qImage, this->d);
 			if(dist < R){
-				neighbors[j].setIndex(dist);
-				neighbors[j].setHashResult(dist);			//hashResult instead--> image id!!!
-				sort(neighbors + 0, neighbors + limit);
+				if(exists(neighbors, hBucket[j].getId(), limit)>=0) continue;
+				neighbors[l].setIndex(dist);
+				neighbors[l].setHashResult(hBucket[j].getId());			//hashResult instead--> image id!!!
+				l++;
+				if(l == limit) break;
+				// sort(neighbors + 0, neighbors + limit);
 			}
-			
 		}
-
+		if(l == limit) break;
 
 	}
-	for(int o=0; o<limit; o++){
-		cout << neighbors[o].getIndex() << endl;
-	}
+	// cout << "ok" << endl;
+	// for(int o=0; o<limit; o++){
+	// 	cout << neighbors[o].getIndex() << endl;
+	// }
 	return neighbors;
 }
 
@@ -354,17 +358,23 @@ Values * HashMap::ARangeSearchCube(uint8_t * qImage, int probes, double R, int s
 		hBucket = this->getHashTableByIndex(0)->getHashBucket(index);
 		int length = hBucket.size();
 		int count = 0;
+		int l=0;
 		// bucketArray = &hBucket[0];			// convert to array
-		for(int j=0;j<limit; j++){				//for every bucket in list-array
+		for(int j=0;j<length; j++){				//for every bucket in list-array
 			int dist = manhattanDistance(hBucket[j].getImage(), qImage, this->d);
 			// cout << "check " << dist << " < " << R << endl;
 			if(dist < R){			//closer than what is currently available
-				neighbors[j].setIndex(dist);
-				neighbors[j].setHashResult(dist);			//hashResult instead--> image id!!!
-				sort(neighbors + 0, neighbors + limit);
+				neighbors[l].setIndex(dist);
+				neighbors[l].setHashResult(dist);			//hashResult instead--> image id!!!
+				l++;
+				// sort(neighbors + 0, neighbors + limit);
+				if(l == limit) break;
 			}
+
 			
 		}
+		if(l == limit) break;
+
 			
 	}
 

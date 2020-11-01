@@ -192,35 +192,41 @@ int main(int argc, char * argv[]){
 	ofstream outputF;
 	outputF.open (outputFile);
 
-	double durationLSH=0.0 ;//= std::chrono::duration_cast<std::chrono::microseconds>( 0 ).count();
 	clock_t start;
-	// dimensions = dx*dy;
 	for(i=0; i<numOfImages; i++){
+		double durationLSH=0.0 ;//= std::chrono::duration_cast<std::chrono::microseconds>( 0 ).count();
+		double durationREAL=0.0 ;//= std::chrono::duration_cast<std::chrono::microseconds>( 0 ).count();
 		buffer = new uint8_t[dimensions];
 		queryF.read((char*)buffer, dimensions);
 		
-		// auto t1REAL = std::chrono::high_resolution_clock::now();
+		auto t1REAL = std::chrono::high_resolution_clock::now();
 		vector <int> realDists = calculateDistances(buffer, dimensions, imagesVector, N);
 		realDists.resize(N);
-		// auto t2REAL = std::chrono::high_resolution_clock::now();
-	 	// auto durationREAL = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
+		auto t2REAL = std::chrono::high_resolution_clock::now();
+		durationREAL = std::chrono::duration_cast<std::chrono::milliseconds>( t2REAL - t1REAL ).count();
 
-		// auto t1LSH = std::chrono::high_resolution_clock::now();
-		// start = clock();
+		auto t1LSH = std::chrono::high_resolution_clock::now();
 		Values * neighbors = hashMap->ANN(buffer);
-		// durationLSH +=(double)(clock() - start)/CLOCKS_PER_SEC;
-		// auto t2LSH = std::chrono::high_resolution_clock::now();
-	    // durationLSH += std::chrono::duration_cast<std::chrono::microseconds>( t2LSH - t1LSH ).count();
-		Values * neighborsInRange = hashMap->ARangeSearch(queryImages[i], R);
-		// outputF << endl << "Query: " << i << endl;
-		// for(int j=0; j<N; j++){
-		// 	outputF << "Nearest neighbor-" << j+1 << ": " << neighbors[j].getHashResult() << endl << "distanceLSH: " << neighbors[j].getIndex() << endl << "distanceTrue: " << realDists[j] << endl;
+		auto t2LSH = std::chrono::high_resolution_clock::now();
+		durationLSH = std::chrono::duration_cast<std::chrono::milliseconds>( t2LSH - t1LSH ).count();
+		
+		Values * neighborsInRange = hashMap->ARangeSearch(buffer, R);
+		outputF << endl << "Query: " << i << endl;
+		for(int j=0; j<N; j++){
+			outputF << "Nearest neighbor-" << j+1 << ": " << neighbors[j].getHashResult() << endl << "distanceLSH: " << neighbors[j].getIndex() << endl << "distanceTrue: " << realDists[j] << endl;
 
-		// }
+		}
+
+		outputF << "tLSH: " << durationLSH << endl;
+		outputF << "tTrue: " << durationREAL << endl;
+
+		outputF << "R-near neighbors: " << endl;
+		for(int j=0; j<20*L; j++){
+			if(neighborsInRange[j].getHashResult()>0)outputF << neighborsInRange[j].getHashResult() << endl;
+		}
 	}
 
-
-    cout << durationLSH << endl;
+    // cout << durationLSH << endl;
 
 	delete hashMap;
 
