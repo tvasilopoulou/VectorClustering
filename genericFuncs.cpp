@@ -5,7 +5,8 @@
 #include "header.hpp"
 using namespace std; 
 
-int manhattanDistance(uint8_t * tempImage, uint8_t * qImage, int size){		//size = dims
+// function to calculate manhattan distance
+int manhattanDistance(uint8_t * tempImage, uint8_t * qImage, int size){
 	int distance = 0;
 	for (int i=0; i<size; i++){
 		distance += abs(qImage[i] - tempImage[i]);
@@ -39,6 +40,7 @@ int hammingDistance(int n1, int n2) {
 	return setBits; 
 } 
 
+// function to check if an image exists in a vector of images
 int exists(Values * neighbors, int id , int size){
 	for(int i = 0; i < size; i++){
 		if(neighbors[i].getHashResult() == id) return i;

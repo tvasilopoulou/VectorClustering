@@ -12,6 +12,7 @@
 #include "funcHeader.hpp"
 
 
+// functions to handle the class Values
 Values::Values(){
 	this->index = pow(2, 28);
 	this->hashResult = -1;
@@ -33,8 +34,9 @@ int Values::getHashResult(void){
 	return this->hashResult;
 }
 Values::~Values(){ }
+///////////////////////////////////////////////////////////////////////////////////////////////
 
-
+// funtions to handle class HashBucket
 HashBucket::HashBucket(int id, uint8_t * image){
 	this->id = id;	
 	this->hashValue = -1;
@@ -52,7 +54,7 @@ int HashBucket::getId(){
 HashTable::HashTable(int size, int k, int d, int w, int * sValues, map <int,int> * hashCache){
 	this->size = size;
 	this->m = pow(2, 32-k);
-	this->M = pow(2, 32/k) -1;							//experiment!!
+	this->M = pow(2, 32/k) -1;							
 	this->k = k;
 	this->d = d;
 	this->sValues = sValues;
@@ -119,7 +121,6 @@ string HashTable::hashFunctionCubeG(int w, int d, uint8_t * image, int imageNumb
 	this->hashBuckets[stoi(g, 0, 2)%this->size].push_back(hBucket);
 	return g;
 }
-
 
 
 
@@ -211,9 +212,10 @@ vector <string> HashMap::getCandidates(){
 HashTable * HashMap::getHashTableByIndex(int index){
 	return this->hashTable[index];
 }
+///////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
+// function to implement ANN
 Values * HashMap::ANN(uint8_t * qImage){
 	vector <HashBucket> hBucket;
 	HashBucket * bucketArray;
@@ -252,7 +254,7 @@ Values * HashMap::ANN(uint8_t * qImage){
 	return neighbors;
 }
 
-
+// function to implement ANN for Hypercube
 Values * HashMap::ANNCube(uint8_t * qImage, int probes){		//pass probes - 1!!!
 	vector <HashBucket> hBucket;
 	Values * neighbors = new Values[this->N];
@@ -305,6 +307,7 @@ Values * HashMap::ANNCube(uint8_t * qImage, int probes){		//pass probes - 1!!!
 }
 
 
+// function to implement range search
 Values * HashMap::ARangeSearch(uint8_t * qImage, double R){
 	vector <HashBucket> hBucket;
 	HashBucket * bucketArray;
@@ -333,10 +336,9 @@ Values * HashMap::ARangeSearch(uint8_t * qImage, double R){
 	return neighbors;
 }
 
-
-Values * HashMap::ARangeSearchCube(uint8_t * qImage, int probes, double R, int size){
-	int limit = 20;
-	Values * neighbors = new Values[limit];
+// function to implement range search for hypercube
+Values * HashMap::ARangeSearchCube(uint8_t * qImage, int probes, double R, int size, int M){
+	Values * neighbors = new Values[M];
 	vector <HashBucket> hBucket;
 	int maxDist = pow(2, 32-this->k);
 	this->candidates.clear();
@@ -359,16 +361,16 @@ Values * HashMap::ARangeSearchCube(uint8_t * qImage, int probes, double R, int s
 		for(int j=0;j<length; j++){				//for every bucket in list-array
 			int dist = manhattanDistance(hBucket[j].getImage(), qImage, this->d);
 			if(dist < R){			//closer than what is currently available
-				if(exists(neighbors, hBucket[j].getId(), limit)>=0) continue;
+				if(exists(neighbors, hBucket[j].getId(), M)>=0) continue;
 				neighbors[l].setIndex(dist);
 				neighbors[l].setHashResult(hBucket[j].getId());			//hashResult instead--> image id!!!
 				l++;
-				if(l == limit) break;
+				if(l == M) break;
 			}
 
 			
 		}
-		if(l == limit) break;
+		if(l == M) break;
 
 			
 	}

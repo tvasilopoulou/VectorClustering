@@ -2,8 +2,8 @@
 # In order to execute this "Makefile" just type "make"
 #
 
-OBJS 	= main.o genericFuncs.o classFuncs.o
-SOURCE	= main.c genericFuncs.cpp classFuncs.cpp
+OBJS 	= lsh.o genericFuncs.o classFuncs.o
+SOURCE	= lsh.c genericFuncs.cpp classFuncs.cpp
 HEADER  = header.hpp funcHeader.hpp
 OUT  	= lsh 
 CC	= g++
@@ -17,8 +17,8 @@ $(OUT): $(OBJS)
 	$(CC) -g $(OBJS) -o $@
 
 # create/compile the individual files >>separately<< 
-main.o: main.cpp
-	$(CC) $(FLAGS) main.cpp
+lsh.o: lsh.cpp
+	$(CC) $(FLAGS) lsh.cpp
 
 genericFuncs.o: genericFuncs.cpp
 	$(CC) $(FLAGS) genericFuncs.cpp

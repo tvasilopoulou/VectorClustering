@@ -4,6 +4,9 @@
 
 using namespace std;
 
+// declaration of used classed and their functions
+
+
 typedef class Values{
 	int index;
 	int hashResult;
@@ -73,7 +76,7 @@ public:
 	Values * ANN(uint8_t * );
 	Values * ANNCube(uint8_t * , int);
 	Values * ARangeSearch(uint8_t * , double);
-	Values * ARangeSearchCube(uint8_t * , int, double, int);
+	Values * ARangeSearchCube(uint8_t * , int, double, int, int);
 	void hammingCalc(string , const int , const int);
 
 } HashMap;
