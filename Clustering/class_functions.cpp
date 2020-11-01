@@ -47,9 +47,18 @@ void Image::setCluster(int val){
     this->clusterId = val;
 }
 
+void Image::setVal(uint8_t * val){
+    this->image = val;
+}
+
 void Image::setMinDist(int val){
     this->minDist = val;
 }
+
+int Image::getSecondNearestCentroid(void){
+    return this->secondNearestCentroid;
+}
+
 void Image::setSecondNearestCentroid(int val){
     this->secondNearestCentroid = val;
 }
@@ -57,6 +66,9 @@ void Image::setSecondMinDist(int val){
     this->secondMinDist = val;
 }
 
+int Image::getSecondMinDist(void){
+    return this->secondMinDist;
+}
 
 Cluster::Cluster(Image * centroidImage){
     this->cluster = centroidImage;

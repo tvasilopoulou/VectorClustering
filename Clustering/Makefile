@@ -1,9 +1,9 @@
 #
 # In order to execute this "Makefile" just type "make"
 #
-OBJS 	= main.o clustering_functions.o class_functions.o
-SOURCE	= main.c clustering_functions.cpp class_functions.cpp
-HEADER  = classes.hpp
+OBJS 	= main.o clustering_functions.o class_functions.o classFuncs.o genericFuncs.o
+SOURCE	= main.c clustering_functions.cpp class_functions.cpp classFuncs.c genericFuncs.c
+HEADER  = classes.hpp header.hpp funcHeader.hpp
 OUT  	= cluster
 CC	= g++
 FLAGS   = -c #-g -Wall
@@ -24,6 +24,12 @@ class_functions.o: class_functions.cpp
 
 clustering_functions.o: clustering_functions.cpp
 	$(CC) $(FLAGS) clustering_functions.cpp
+
+genericFuncs.o: genericFuncs.cpp
+	$(CC) $(FLAGS) genericFuncs.cpp
+
+classFuncs.o: classFuncs.cpp
+	$(CC) $(FLAGS) classFuncs.cpp
 
 # clean house
 clean:

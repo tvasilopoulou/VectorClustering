@@ -171,11 +171,14 @@ int main(int argc, char * argv[]){
 	vector <Image*> initalCentroids = kMeansInitialization(imagesVector, L, K, numOfImages, dimensions);
 
 	// use the initial centroids produced by kmeans++ for Lloyd's algorithm
-	vector <Image*> updatedCentroids = LloydsAlgorithm(imagesVector, initalCentroids, numOfImages);
+	// vector <Image*> updatedCentroids = LloydsAlgorithm(imagesVector, initalCentroids, numOfImages);
 	
+	// reverseAssignmentLSH(initalCentroids, imagesVector, L, k);
+	reverseAssignmentCube(initalCentroids, imagesVector, M, kHypercube, probes);
+
 	// clear vectors, free variables and return
 	initalCentroids.clear();
-	updatedCentroids.clear();
+	// updatedCentroids.clear();
 	free(inputFile);
 	free(outputFile);
 	free(configFile);

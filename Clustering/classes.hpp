@@ -17,9 +17,12 @@ public:
 	uint8_t * getVal();
 	int getDimensions();
     int getCluster();
+	int getSecondNearestCentroid(void);
     int getID();
 	int getMinDist();
+	int getSecondMinDist();
     void setCluster(int);
+    void setVal(uint8_t *);
 	void setMinDist(int);
 	void setSecondNearestCentroid(int);
     void setSecondMinDist(int);
