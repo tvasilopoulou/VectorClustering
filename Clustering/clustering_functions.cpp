@@ -1,20 +1,11 @@
 #include <iostream>
 #include <bits/stdc++.h> 
 #include <cmath>
-#include <numeric>
 #include "classes.hpp"
 #include "clustering_functions.hpp"
-
+#include "header.hpp"
+#include "funcHeader.hpp"
 using namespace std; 
-
-int manhattanDistance(uint8_t * qImage, uint8_t * tempImage, int size){   //size = dims
-    int distance = 0, i;
-    for (i = 0; i < size; i++)
-    {
-        distance += abs(qImage[i] - tempImage[i]);
-    }
-    return distance;
-}
 
 
 vector<Image*> kMeansInitialization(vector<Image*> images, int iterations, int k, int numOfImages, int dimensions){
@@ -128,6 +119,8 @@ double CalculateMedianDistance(vector<Image *> data){
     return medianDist;
 }
 
+
+
 void InitializeClusters(vector<Image *> centroids, vector<Cluster *> *clusters){
     // initialize all clusters of cluster vector
     int c;
@@ -138,102 +131,6 @@ void InitializeClusters(vector<Image *> centroids, vector<Cluster *> *clusters){
     }
     /////////////////////////////////////////////////////////////////////////////
     return;
-}
-
-
-vector<double> Silhouette(vector<Cluster *> clusterSet,vector<Image *> images){
-    int i, c;
-    double sumA = 0.0, sumB = 0.0;
-
-   vector<double> s;
-   vector<double> a;
-   vector<double> b;
-    for (i = 0; i < images.size(); i++)
-    {
-        // calculate a -> the average l1 (manhattan) distance of image i from all the images that are included to the same cluster
-        int clusterOfimage = images[i]->getCluster();
-        vector<uint8_t *> imagesOfCluster = *(clusterSet[clusterOfimage]->getImagesVector());
-        for (c = 0; c < imagesOfCluster.size(); c++)
-        {
-            a.push_back((double)manhattanDistance(imagesOfCluster[c], images[i]->getVal(), images[i]->getDimensions())/(double)imagesOfCluster.size());
-        }
-        sumA = accumulate(a.begin(), a.end(), 0.0);
-        // cout << sumA << endl;
-
-        // calculate b -> the average l1 (manhattan) distance of image i from all the images that are included to the same next best cluster
-        int nextBestNeighbor = images[i]->getNextBestNeighbor();
-        vector<uint8_t *> imagesOfNextCluster = *(clusterSet[nextBestNeighbor]->getImagesVector());
-        for (c = 0; c < imagesOfNextCluster.size(); c++)
-        {
-            b.push_back((double)manhattanDistance(imagesOfNextCluster[c], images[i]->getVal(), images[i]->getDimensions())/(double)imagesOfNextCluster.size());
-        }
-        sumB = accumulate(b.begin(), b.end(), 0.0);
-        
-        // cout << a << " " << b << endl;
-        if (sumA == sumB)
-        {
-            s.push_back(0.0);
-        }
-        else if (sumA < sumB)
-        {
-            double tmp = (double)(1-sumA)/(double)sumB;
-            s.push_back(tmp);
-        }
-        else
-        {
-            double tmp = (double)sumB/(double)(sumA-1);
-            s.push_back(tmp);
-        }
-    }
-
-    return s;
-}
-
-
-void PrintResults(ofstream& outFile, vector<Cluster *> clusterSet, vector<double> si, vector<Image *> dataSet, int complete)
-{
-    int c, p, i;
-    for (c = 0; c < clusterSet.size(); c++)
-    {
-        outFile << "CLUSTER-" << c << " {size: " << (*clusterSet[c]->getImagesVector()).size() << ", ";
-        outFile << "centroid: [";
-        // cout << clusterSet[c]->getCluster()->getDimensions() << endl;
-        for (p = 0; p < clusterSet[c]->getCluster()->getDimensions(); p++)
-        {
-            outFile << (long int)clusterSet[c]->getCluster()->getVal()[p] << " ";
-        }
-        outFile << "]" << endl;
-    }
-
-    outFile << "Silhouette: " << "[";
-    for (i = 0; i < si.size(); i++)
-    {
-        outFile << si[i] << " ";
-    }
-    outFile << "]}" << endl;
-
-    if (complete == 1)
-    {
-        for (c = 0; c < clusterSet.size(); c++)
-        {
-            outFile << endl << "CLUSTER-" << c << " { " << clusterSet[c]->getCluster()->getID() << ", ";
-            // cout << clusterSet[c]->getCluster()->getDimensions() << endl;
-            for (p = 0; p < dataSet.size(); p++)
-            {
-                if (dataSet[p]->getCluster() == c)
-                {
-                    if (p == dataSet.size() - 1)
-                    {
-                        outFile << dataSet[p]->getID() << "}" ;  
-                    }
-                    else{
-                        outFile << dataSet[p]->getID() << ", " ;  
-                    }   
-                }
-            }
-        }
-        outFile << endl; 
-    }
 }
 
 
@@ -313,7 +210,6 @@ vector<Cluster *> LloydsAlgorithm(vector<Image *> images, vector<Image *> centro
         {  
             int median;
             uint8_t * newCentroid = new uint8_t[dimensions];
-            // cout << "clusters size "<< (*clusters[c]->getImagesVector()).size() << endl;
             for (i = 0; i < dimensions; i++)
             {
                 vector<uint8_t> newPixel;
@@ -338,9 +234,7 @@ vector<Cluster *> LloydsAlgorithm(vector<Image *> images, vector<Image *> centro
             updatedCentroids.push_back(newClusterCenter);
         }
         /////////////////////////////////////////////////////////////////////////////
-        
-        // cout << "antio tommy " << endl; 
-        
+                
         // calculate new percetange
         currentMedian = CalculateMedianDistance(images);
         percentage = (double)(abs(currentMedian - medianDistance)/(double)medianDistance);
@@ -358,8 +252,310 @@ vector<Cluster *> LloydsAlgorithm(vector<Image *> images, vector<Image *> centro
         }
 
     }
-    // PrintResults(outFile, clusters, si);
-
-    // cout << "assignment done " << endl;
     return clusters;
+}
+
+
+void reverseAssignmentLSH(vector <Image*> clusterCenters, vector<Image *> images, int L, int k){
+    int dimensions = images[0]->getDimensions();
+    int fixedInd = (images.size())/16;
+
+    // create a hash map and assign values to it
+    HashMap * hashMap = new HashMap(L, fixedInd, k, dimensions, 4000, 0);
+    for(int i=0; i<images.size(); i++){
+        for(int j=0; j<L; j++){
+            hashMap->getHashTableByIndex(j)->hashFunctionG(4000, dimensions, images[i]->getVal(), i); 
+        }
+    }
+    /////////////////////////////////////////////////////////////////////////
+
+    double R = 10000.0;
+    int limit = 20*L;
+    vector <int> distances;
+    double percentage = 1.0;
+    double medianDistance = 0.0;
+
+    // calculate manhattan distance between tow clusters
+    for(int m = 0; m<clusterCenters.size() - 1; m+=2){
+        medianDistance += ((double)manhattanDistance(clusterCenters[m]->getVal(), clusterCenters[m+1]->getVal(), dimensions))/(double)clusterCenters.size();
+    }
+    /////////////////////////////////////////////////////////////////////////
+
+    // while the change of median distance is greater than 50%
+    while(percentage > 0.5){
+
+        vector <vector <Values>> clusterSystem;
+        double currentMedian;
+        for(int i=0; i<clusterCenters.size(); i++){
+            int oldSize = -1;
+            vector <Values> itemsInCluster;
+            while(oldSize != itemsInCluster.size()){
+                // calculate which neighbors are in range R
+                Values * neighborsInRange = hashMap->ARangeSearch(clusterCenters[i]->getVal(), R);
+                oldSize = itemsInCluster.size();
+                for(int j=0; j<limit; j++){
+                    int flag = 0;
+                    if(existsInVector(itemsInCluster, neighborsInRange[j].getHashResult()) >= 0) continue;
+                    else{
+                        for(int p=0; p<clusterSystem.size(); p++){
+                            int oldIndex = existsInVector(clusterSystem[p], neighborsInRange[j].getHashResult());
+                            if(oldIndex>=0){
+                                vector <Values> currCluster = clusterSystem[p];
+                                if(currCluster[oldIndex].getIndex() > neighborsInRange[j].getIndex()){
+                                    currCluster.erase(currCluster.begin() + oldIndex);
+                                    clusterSystem[p] = currCluster;
+                                }
+                                else flag = 1;
+                            }
+                            if(flag==1) break;
+                        }
+                        neighborsInRange[j].setFlag(1);
+                        itemsInCluster.push_back(neighborsInRange[j]);
+                    }
+                    if(neighborsInRange[j].getFlag()<0 && neighborsInRange[j].getHashResult()>=0){
+                        clusterSystem[neighborsInRange[j].getHashResult()].push_back(neighborsInRange[j]);
+                    }
+                }
+                // duplicate range
+                R = 2*R;
+                /////////////////////////////////////////////////////////////////////////
+
+            }
+            clusterSystem.push_back(itemsInCluster);
+        }
+        
+        // update centroids using lloyd's update
+        for(int c=0; c<clusterSystem.size(); c++){
+            uint8_t * newCentroid = new uint8_t[dimensions];
+
+            for(int dim=0; dim<dimensions; dim++){
+                vector <uint8_t> newPixel;
+                vector <Values> currCluster = clusterSystem[c];
+                for(int m=0; m<currCluster.size(); m++){
+                    int imageID = currCluster[m].getHashResult();
+                    if(imageID<0) continue;
+                    uint8_t * imagePixels = images[imageID]->getVal();
+                    newPixel.push_back(imagePixels[dim]);
+                }
+                sort(newPixel.begin(), newPixel.end());
+                int median = ceil(newPixel.size()/2);
+                newCentroid[dim] = newPixel[median];
+            }
+            distances.push_back(manhattanDistance(clusterCenters[c]->getVal(), newCentroid, dimensions));
+            clusterCenters[c]->setVal(newCentroid);
+
+        }
+        /////////////////////////////////////////////////////////////////////////
+
+        // calculate current median distance and new percentage of change
+        sort(distances.begin(), distances.end());
+        for(int v=0; v<distances.size(); v++){
+            currentMedian += ((double)distances[v]/distances[distances.size() -1]);
+        }
+        if(medianDistance == 0 || currentMedian == 0) return;
+        percentage = (double)(abs(currentMedian - medianDistance)/(double)medianDistance);
+        medianDistance = currentMedian;
+        /////////////////////////////////////////////////////////////////////////
+
+    }
+    /*clusterSystem = vector of vectors -> all centroids with every image belonging to each centroid*/
+}
+
+void reverseAssignmentCube(vector <Image*> clusterCenters, vector <Image*> images, int M, int k, int probes){
+    
+    int dimensions = images[0]->getDimensions();
+    int fixedInd = (images.size())/16;
+    
+    // create a hash map and assign values to it
+    HashMap * hashMap = new HashMap(1, fixedInd, k, dimensions, 4000, 0);
+    for(int i=0; i<images.size(); i++){
+        hashMap->getHashTableByIndex(0)->hashFunctionCubeG(4000, dimensions,images[i]->getVal(), i); 
+    }
+    /////////////////////////////////////////////////////////////////////////
+
+    double R = 10000.0;
+    int limit = M;
+    vector <int> distances;
+    double percentage = 1.0;
+    double medianDistance = 0.0;
+
+    // calculate the median distance between clusters
+    for(int m = 0; m<clusterCenters.size() - 1; m+=2){
+        medianDistance += ((double)manhattanDistance(clusterCenters[m]->getVal(), clusterCenters[m+1]->getVal(), dimensions))/(double)clusterCenters.size();
+    }
+    /////////////////////////////////////////////////////////////////////////
+
+    // while the change is greater than 50%
+    while(percentage > 0.5){
+        vector <vector <Values>> clusterSystem;
+        double currentMedian;
+    
+        for(int i=0; i<clusterCenters.size(); i++){
+            int oldSize = -1;
+            vector <Values> itemsInCluster;
+            while(oldSize != itemsInCluster.size()){
+                // calculate which neighbors are in range R for hypercube
+                Values * neighborsInRange = hashMap->ARangeSearchCube(clusterCenters[i]->getVal(), probes, R, fixedInd, M);
+                oldSize = itemsInCluster.size();
+                for(int j=0; j<limit; j++){
+                    int flag = 0;
+                    if(existsInVector(itemsInCluster, neighborsInRange[j].getHashResult()) >= 0) continue;
+                    else{
+                        for(int p=0; p<clusterSystem.size(); p++){
+                            int oldIndex = existsInVector(clusterSystem[p], neighborsInRange[j].getHashResult());
+                            if(oldIndex>=0){
+                                vector <Values> currCluster = clusterSystem[p];
+                                if(currCluster[oldIndex].getIndex() > neighborsInRange[j].getIndex()){
+                                    currCluster.erase(currCluster.begin() + oldIndex);
+                                    clusterSystem[p] = currCluster;
+                                }
+                                else flag = 1;
+                            }
+                            if(flag==1) break;
+                        }
+                        neighborsInRange[j].setFlag(1);
+                        itemsInCluster.push_back(neighborsInRange[j]);
+                    }
+                    // cout << neighborsInRange[j].getFlag() << " " << neighborsInRange[j].getHashResult() << endl;
+                    if(neighborsInRange[j].getFlag()<0 && neighborsInRange[j].getHashResult()>=0){
+                        clusterSystem[neighborsInRange[j].getHashResult()].push_back(neighborsInRange[j]);
+                    }
+                }
+                // duplicate range
+                R = 2*R;
+                /////////////////////////////////////////////////////////////////////////
+            }
+            clusterSystem.push_back(itemsInCluster);
+        }
+        
+        // update centroids using lloyd's update
+        for(int c=0; c<clusterSystem.size(); c++){
+            uint8_t * newCentroid = new uint8_t[dimensions];
+            for(int dim=0; dim<dimensions; dim++){
+                vector <uint8_t> newPixel;
+                vector <Values> currCluster = clusterSystem[c];
+                for(int m=0; m<currCluster.size(); m++){
+                    int imageID = currCluster[m].getHashResult();
+                    if(imageID<0) continue;
+                    uint8_t * imagePixels = images[imageID]->getVal();
+                    newPixel.push_back(imagePixels[dim]);
+                }
+                sort(newPixel.begin(), newPixel.end());
+                int median = ceil(newPixel.size()/2);
+                newCentroid[dim] = newPixel[median];
+            }
+            distances.push_back(manhattanDistance(clusterCenters[c]->getVal(), newCentroid, dimensions));
+            clusterCenters[c]->setVal(newCentroid);
+        }
+        /////////////////////////////////////////////////////////////////////////
+        
+        // calculate current median distance and new percentage of change
+        sort(distances.begin(), distances.end());
+        for(int v=0; v<distances.size(); v++){
+            currentMedian += ((double)distances[v]/distances[distances.size() -1]);
+        }
+        if(medianDistance == 0 || currentMedian == 0) return;
+        percentage = (double)(abs(currentMedian - medianDistance)/(double)medianDistance);
+        medianDistance = currentMedian;
+        /////////////////////////////////////////////////////////////////////////
+
+    }
+}
+vector<double> Silhouette(vector<Cluster *> clusterSet,vector<Image *> images){
+    int i, c;
+    double sumA = 0.0, sumB = 0.0;
+
+   vector<double> s;
+   vector<double> a;
+   vector<double> b;
+    for (i = 0; i < images.size(); i++)
+    {
+        // calculate a -> the average l1 (manhattan) distance of image i from all the images that are included to the same cluster
+        int clusterOfimage = images[i]->getCluster();
+        vector<uint8_t *> imagesOfCluster = *(clusterSet[clusterOfimage]->getImagesVector());
+        for (c = 0; c < imagesOfCluster.size(); c++)
+        {
+            a.push_back((double)manhattanDistance(imagesOfCluster[c], images[i]->getVal(), images[i]->getDimensions())/(double)imagesOfCluster.size());
+        }
+        sumA = accumulate(a.begin(), a.end(), 0.0);
+        // cout << sumA << endl;
+
+        // calculate b -> the average l1 (manhattan) distance of image i from all the images that are included to the same next best cluster
+        int nextBestNeighbor = images[i]->getSecondNearestCentroid();
+        vector<uint8_t *> imagesOfNextCluster = *(clusterSet[nextBestNeighbor]->getImagesVector());
+        for (c = 0; c < imagesOfNextCluster.size(); c++)
+        {
+            b.push_back((double)manhattanDistance(imagesOfNextCluster[c], images[i]->getVal(), images[i]->getDimensions())/(double)imagesOfNextCluster.size());
+        }
+        sumB = accumulate(b.begin(), b.end(), 0.0);
+        
+        // assign the correct value to s
+        if (sumA == sumB)
+        {
+            s.push_back(0.0);
+        }
+        else if (sumA < sumB)
+        {
+            double tmp = (double)(1-sumA)/(double)sumB;
+            s.push_back(tmp);
+        }
+        else
+        {
+            double tmp = (double)sumB/(double)(sumA-1);
+            s.push_back(tmp);
+        }
+    }
+
+    return s;
+}
+
+
+void PrintResults(ofstream& outFile, vector<Cluster *> clusterSet, vector<double> si, vector<Image *> dataSet, int complete)
+{
+    int c, p, i;
+    // for each cluster
+    for (c = 0; c < clusterSet.size(); c++)
+    {
+        // print its size aka the number of images assigned to it
+        outFile << "CLUSTER-" << c << " {size: " << (*clusterSet[c]->getImagesVector()).size() << ", ";
+        outFile << "centroid: [";
+        // keep the centroids image and print its pixels
+        for (p = 0; p < clusterSet[c]->getCluster()->getDimensions(); p++)
+        {
+            outFile << (long int)clusterSet[c]->getCluster()->getVal()[p] << " ";
+        }
+        outFile << "]" << endl;
+    }
+
+    // print the silhouette values for the corresponding cluster
+    outFile << "Silhouette: " << "[";
+    for (i = 0; i < si.size(); i++)
+    {
+        outFile << si[i] << " ";
+    }
+    outFile << "]}" << endl;
+
+    // if optional argument is given 
+    if (complete == 1)
+    {
+        for (c = 0; c < clusterSet.size(); c++)
+        {
+            outFile << endl << "CLUSTER-" << c << " { " << clusterSet[c]->getCluster()->getID() << ", ";
+            // print the image ids
+            for (p = 0; p < dataSet.size(); p++)
+            {
+                if (dataSet[p]->getCluster() == c)
+                {
+                    if (p == dataSet.size() - 1)
+                    {
+                        outFile << dataSet[p]->getID() << "}" ;  
+                    }
+                    else{
+                        outFile << dataSet[p]->getID() << ", " ;  
+                    }   
+                }
+            }
+        }
+        outFile << endl; 
+    }
 }

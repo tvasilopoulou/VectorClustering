@@ -2,7 +2,7 @@
 #include <iterator> 
 #include <string>
 #include <map>
-#include <utility>      // std::pair
+#include <utility>      
 #include <ctime> 
 #include <vector> 
 #include <cmath> 
@@ -63,7 +63,7 @@ int HashBucket::getId(){
 HashTable::HashTable(int size, int k, int d, int w, int * sValues, map <int,int> * hashCache){
 	this->size = size;
 	this->m = pow(2, 32-k);
-	this->M = pow(2, 32/k) -1;							//experiment!!
+	this->M = pow(2, 32/k) -1;							
 	this->k = k;
 	this->d = d;
 	this->sValues = sValues;

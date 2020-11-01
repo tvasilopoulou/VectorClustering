@@ -157,6 +157,7 @@ int main(int argc, char * argv[]){
 	ofstream outputF(outputFile, ios::out);
   	outputF << "Algorithm: " << method << endl;
 
+
 	// read input file to retrieve images
 	while (i!=numOfImages)
 	{
@@ -172,21 +173,22 @@ int main(int argc, char * argv[]){
 
 	// run kmeans++ initialization
 	vector <Image*> initalCentroids = kMeansInitialization(imagesVector, L, K, numOfImages, dimensions);
-	vector<Cluster *> clusterSet;
-	if ((strcmp(method, "Classic") == 0))
-		// use the initial centroids produced by kmeans++ for Lloyd's algorithm
-		clusterSet = LloydsAlgorithm(imagesVector, initalCentroids, numOfImages);
-	else if ((strcmp(method, "LSH") == 0))
-		reverseAssignmentLSH(initalCentroids, imagesVector, L, k);
-	else if ((strcmp(method, "Hypercube") == 0))
-		reverseAssignmentCube(initalCentroids, imagesVector, M, kHypercube, probes);
-	
+
+	// use the initial centroids produced by kmeans++ for Lloyd's algorithm
+	// vector <Image*> updatedCentroids = LloydsAlgorithm(imagesVector, initalCentroids, numOfImages);
+	// vector<Cluster *> clusterSet = LloydsAlgorithm(imagesVector, initalCentroids, numOfImages);
+
 	// vector<double> si = Silhouette(clusterSet, imagesVector);
 	vector<double> si = {0.0};
 
-	PrintResults(outputF, clusterSet, si, imagesVector, complete);
+	// PrintResults(outputF, clusterSet, si, imagesVector, complete);
 
+	vector <Image *> centroidsReverse = initalCentroids;
+	reverseAssignmentLSH(initalCentroids, imagesVector, L, k);
+	initalCentroids = centroidsReverse;
+	// reverseAssignmentCube(initalCentroids, imagesVector, M, kHypercube, probes);
 	outputF.close();
+
 	// clear vectors, free variables and return
 	initalCentroids.clear();
 	// updatedCentroids.clear();
