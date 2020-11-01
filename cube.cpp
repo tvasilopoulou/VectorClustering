@@ -202,14 +202,47 @@ int main(int argc, char * argv[]){
 		} 
 	}
 
-	uint8_t * queryImages[numOfImages];
+	queryF.close();
 
+	uint8_t * queryImages[numOfImages];
+	ofstream outputF;
+	outputF.open (outputFile);
+	
 	for(i=0; i<numOfImages; i++){
+		double durationCube=0.0 ;//= std::chrono::duration_cast<std::chrono::microseconds>( 0 ).count();
+		double durationREAL=0.0 ;//= std::chrono::duration_cast<std::chrono::microseconds>( 0 ).count();
+
 		buffer = new uint8_t[dimensions];
 		queryF.read((char*)buffer, dimensions);
- 		// Values * neighbors = hashMap->ANNCube(buffer, probes);
-		Values * neighbors = hashMap->ARangeSearchCube(buffer, probes, R, fixedInd);
-		for(int o=0; o<20; o++) if(neighbors[o].getIndex() < R) cout<< neighbors[o].getIndex() << endl;
+
+		auto t1REAL = std::chrono::high_resolution_clock::now();
+		vector <int> realDists = calculateDistances(buffer, dimensions, imagesVector, N);
+		realDists.resize(N);
+		auto t2REAL = std::chrono::high_resolution_clock::now();
+		durationREAL = std::chrono::duration_cast<std::chrono::microseconds>( t2REAL - t1REAL ).count();
+
+		auto t1Cube = std::chrono::high_resolution_clock::now();
+ 		Values * neighbors = hashMap->ANNCube(buffer, probes);
+		auto t2Cube = std::chrono::high_resolution_clock::now();
+		durationCube = std::chrono::duration_cast<std::chrono::microseconds>( t2Cube - t1Cube ).count();
+		
+
+		Values * neighborsInRange = hashMap->ARangeSearchCube(buffer, probes, R, fixedInd);
+
+		outputF << endl << "Query: " << i << endl;
+		for(int j=0; j<N; j++){
+			outputF << "Nearest neighbor-" << j+1 << ": " << neighbors[j].getHashResult() << endl << "distanceCube: " << neighbors[j].getIndex() << endl << "distanceTrue: " << realDists[j] << endl;
+
+		}
+
+		outputF << "tCube: " << durationCube << endl;
+		outputF << "tTrue: " << durationREAL << endl;
+
+		outputF << "R-near neighbors: " << endl;
+		for(int j=0; j<20; j++){
+			if(neighborsInRange[j].getHashResult()>0)outputF << neighborsInRange[j].getHashResult() << endl;
+		}
+
 	}
 
 

@@ -22,7 +22,7 @@ bool operator<(Values & x, Values & y){
 vector <int> calculateDistances(uint8_t * qImage, int dimensions, vector <uint8_t *> imageVector, int N){
 	vector <int> distances;
 	for (auto &image : imageVector){
-		distances.push_back(manhattanDistance(qImage, image, dimensions));
+		if(qImage!=image) distances.push_back(manhattanDistance(qImage, image, dimensions));
 	}
 	sort(distances.begin(),distances.end());
 	return distances;

@@ -224,14 +224,9 @@ Values * HashMap::ANN(uint8_t * qImage){
 		index = this->getHashTableByIndex(i)->hashFunctionG(this->w, this->d, qImage, pow(2, 32-this->k));		//only return list
 		hBucket = this->getHashTableByIndex(i)->getHashBucket(index);
 		int length = hBucket.size();
-		// if(length==0) continue;				// if no neighbors in current list of hashtable, skip
 		int count = 0;
-		// bucketArray = &hBucket[0];			// convert to array
 		for(int j=0;j<length; j++){				//for every bucket in list-array
-			// maxDist = neighbors[this->N - 1].getIndex();
-			// cout << (long int) hBucket[j].getId() << endl;
 			int dist = manhattanDistance(hBucket[j].getImage(), qImage, this->d);
-			// cout << dist << " is < than " << maxDist << "?" << endl;
 			if(dist < maxDist){			//closer than what is currently available
 				int oldIndex = exists(neighbors, hBucket[j].getId(), this->N);
 				if(oldIndex>=0){
@@ -246,7 +241,6 @@ Values * HashMap::ANN(uint8_t * qImage){
 				sort(neighbors + 0, neighbors + this->N);
 				maxDist = neighbors[this->N - 1].getIndex();
 				count++;
-				// cout << "MaxDist now is " << maxDist << endl;
 				if(count == 10*this->size) break;
 
 			}
@@ -260,12 +254,11 @@ Values * HashMap::ANN(uint8_t * qImage){
 
 
 Values * HashMap::ANNCube(uint8_t * qImage, int probes){		//pass probes - 1!!!
-	Values * neighbors = new Values[this->N];
 	vector <HashBucket> hBucket;
+	Values * neighbors = new Values[this->N];
 	int maxDist = pow(2, 32-this->k);
 	this->candidates.clear();
 	string gValue = this->getHashTableByIndex(0)->hashFunctionCubeG(this->w, this->d, qImage, pow(2, 32-this->k));
-	// int index = stoi(gValue, 0, 2) % (this->size); //1st bucket to search for neighbors
 	this->candidates.push_back(gValue);
 
 	for(int c=1; this->candidates.size()<=probes; c++){
@@ -282,10 +275,20 @@ Values * HashMap::ANNCube(uint8_t * qImage, int probes){		//pass probes - 1!!!
 		int count = 0;
 		// bucketArray = &hBucket[0];			// convert to array
 		for(int j=0;j<length; j++){				//for every bucket in list-array
+
 			int dist = manhattanDistance(hBucket[j].getImage(), qImage, this->d);
+			if(dist == 0) continue;
 			if(dist < maxDist){			//closer than what is currently available
-				neighbors[this->N - 1].setIndex(dist);
-				neighbors[this->N - 1].setHashResult(hBucket[j].getId());
+				int oldIndex = exists(neighbors, hBucket[j].getId(), this->N);
+				if(oldIndex>=0){
+					if(neighbors[oldIndex].getIndex() > dist){
+						neighbors[oldIndex].setIndex(dist);
+					}
+				}
+				else{
+					neighbors[this->N - 1].setIndex(dist);
+					neighbors[this->N - 1].setHashResult(hBucket[j].getId());
+				}
 				sort(neighbors + 0, neighbors + this->N);
 				maxDist = neighbors[this->N - 1].getIndex();
 				count++;
@@ -313,7 +316,6 @@ Values * HashMap::ARangeSearch(uint8_t * qImage, double R){
 		index = this->getHashTableByIndex(i)->hashFunctionG(w, d, qImage, -1);
 		hBucket = this->getHashTableByIndex(i)->getHashBucket(index);
 		int length = hBucket.size();
-		// bucketArray = &hBucket[0];
 		for(int j=0; j<length; j++){				//instead of length -> 10*L
 			int dist = manhattanDistance(hBucket[j].getImage(), qImage, this->d);
 			if(dist < R){
@@ -322,16 +324,12 @@ Values * HashMap::ARangeSearch(uint8_t * qImage, double R){
 				neighbors[l].setHashResult(hBucket[j].getId());			//hashResult instead--> image id!!!
 				l++;
 				if(l == limit) break;
-				// sort(neighbors + 0, neighbors + limit);
 			}
 		}
 		if(l == limit) break;
 
 	}
-	// cout << "ok" << endl;
-	// for(int o=0; o<limit; o++){
-	// 	cout << neighbors[o].getIndex() << endl;
-	// }
+
 	return neighbors;
 }
 
@@ -343,7 +341,6 @@ Values * HashMap::ARangeSearchCube(uint8_t * qImage, int probes, double R, int s
 	int maxDist = pow(2, 32-this->k);
 	this->candidates.clear();
 	string gValue = this->getHashTableByIndex(0)->hashFunctionCubeG(this->w, this->d, qImage, pow(2, 32-this->k));
-	// int index = stoi(gValue, 0, 2) % size; //1st bucket to search for neighbors
 	this->candidates.push_back(gValue);
 
 	for(int c=1; this->candidates.size()<=probes; c++){
@@ -359,15 +356,13 @@ Values * HashMap::ARangeSearchCube(uint8_t * qImage, int probes, double R, int s
 		int length = hBucket.size();
 		int count = 0;
 		int l=0;
-		// bucketArray = &hBucket[0];			// convert to array
 		for(int j=0;j<length; j++){				//for every bucket in list-array
 			int dist = manhattanDistance(hBucket[j].getImage(), qImage, this->d);
-			// cout << "check " << dist << " < " << R << endl;
 			if(dist < R){			//closer than what is currently available
+				if(exists(neighbors, hBucket[j].getId(), limit)>=0) continue;
 				neighbors[l].setIndex(dist);
-				neighbors[l].setHashResult(dist);			//hashResult instead--> image id!!!
+				neighbors[l].setHashResult(hBucket[j].getId());			//hashResult instead--> image id!!!
 				l++;
-				// sort(neighbors + 0, neighbors + limit);
 				if(l == limit) break;
 			}
 
