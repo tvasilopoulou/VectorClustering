@@ -9,7 +9,6 @@ typedef class Image{
 	int clusterId;
 	int minDist;
 	int secondNearestCentroid;
-	int secondMinDist;
 	int dimensions;
 	uint8_t * image;
 public:
@@ -17,15 +16,12 @@ public:
 	uint8_t * getVal();
 	int getDimensions();
     int getCluster();
-	int getSecondNearestCentroid(void);
+    int getNextBestNeighbor();
     int getID();
 	int getMinDist();
-	int getSecondMinDist();
     void setCluster(int);
-    void setVal(uint8_t *);
 	void setMinDist(int);
 	void setSecondNearestCentroid(int);
-    void setSecondMinDist(int);
 }Image;
 
 

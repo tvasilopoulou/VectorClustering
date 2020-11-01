@@ -153,7 +153,10 @@ int main(int argc, char * argv[]){
 	uint8_t * imagesArray[numOfImages];
 	uint8_t * buffer;
 	i = 0;
-	
+
+	ofstream outputF(outputFile, ios::out);
+  	outputF << "Algorithm: " << method << endl;
+
 	// read input file to retrieve images
 	while (i!=numOfImages)
 	{
@@ -168,17 +171,19 @@ int main(int argc, char * argv[]){
     /////////////////////////////////////////////////////////////////////////////
 
 	// run kmeans++ initialization
-	vector <Image*> initalCentroids = kMeansInitialization(imagesVector, L, K, numOfImages, dimensions);
+	vector <Image *> initalCentroids = kMeansInitialization(imagesVector, L, K, numOfImages, dimensions);
 
 	// use the initial centroids produced by kmeans++ for Lloyd's algorithm
-	// vector <Image*> updatedCentroids = LloydsAlgorithm(imagesVector, initalCentroids, numOfImages);
-	
-	// reverseAssignmentLSH(initalCentroids, imagesVector, L, k);
-	reverseAssignmentCube(initalCentroids, imagesVector, M, kHypercube, probes);
+	vector<Cluster *> clusterSet = LloydsAlgorithm(imagesVector, initalCentroids, numOfImages);
 
+	vector<double> si = Silhouette(clusterSet, imagesVector);
+	// vector<double> si = {0.0};
+
+	PrintResults(outputF, clusterSet, si, imagesVector, complete);
+
+	outputF.close();
 	// clear vectors, free variables and return
 	initalCentroids.clear();
-	// updatedCentroids.clear();
 	free(inputFile);
 	free(outputFile);
 	free(configFile);
